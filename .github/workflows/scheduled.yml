@@ -67,8 +67,8 @@ jobs:
           su makepkg -c "updpkgsums"
           su makepkg -c "makepkg --printsrcinfo" > .SRCINFO
 
-          rsync --progress --delete --exclude={'*.gz','*.xz','.github','pkg','src','.git'} ${buildDir}/ ${githubRepoDir}/
-          rsync --progress --delete --exclude={'*.gz','*.xz','.github','pkg','src','.git'} ${buildDir}/ ${aurRepoDir}/
+          rsync --progress --delete -r --exclude={'*.gz','*.xz','.github','pkg','src','.git'} ${buildDir}/ ${githubRepoDir}/
+          rsync --progress --delete -r --exclude={'*.gz','*.xz','.github','pkg','src','.git'} ${buildDir}/ ${aurRepoDir}/
 
           cd ${aurRepoDir}
 
