@@ -39,16 +39,24 @@ jobs:
           GIT_SSH_COMMAND: "ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
         run: |
           current=$(grep -P "^pkgver" PKGBUILD | cut -d= -f2)
-          buildDir="${PWD}"
-
-          git clone ssh://aur@aur.archlinux.org/cava.git ~/cava
-
           latest=$(curl --silent "https://api.github.com/repos/karlstav/cava/releases/latest" | jq -r .tag_name)
+
+          aurRepoDir="~/cava"
+          githubRepoDir="${PWD}"
+          buildDir="/tmp/build"
 
           echo "Previous version: ${current}"
           echo "New version: ${latest}"
 
           [[ "${current}" == "${latest}" ]] && exit 0
+
+          git config --global user.name ${{ secrets.MY_GIT_NAME }}
+          git config --global user.email ${{ secrets.MY_GIT_EMAIL }}
+          git clone ssh://aur@aur.archlinux.org/cava.git ${aurRepoDir}
+
+          rsync --progress --delete -r --exclude={'*.gz','*.xz','.github','pkg','src','.git'} ${githubRepoDir} ${buildDir}
+
+          cd ${buildDir}
 
           useradd makepkg
           chown makepkg:root . -R
@@ -59,18 +67,16 @@ jobs:
           su makepkg -c "updpkgsums"
           su makepkg -c "makepkg --printsrcinfo" > .SRCINFO
 
-          git config --global user.name ${{ secrets.MY_GIT_NAME }}
-          git config --global user.email ${{ secrets.MY_GIT_EMAIL }}
+          rsync --progress --delete --exclude={'*.gz','*.xz','.github','pkg','src','.git'} ${buildDir} ${githubRepoDir}
+          rsync --progress --delete --exclude={'*.gz','*.xz','.github','pkg','src','.git'} ${buildDir} ${aurRepoDir}
 
-          find . -maxdepth 1 -type f -exec cp -v {} ~/cava \;
-
-          cd ~/cava
+          cd ${aurRepoDir}
 
           git add .
           git commit -m "Update cava to v${latest}"
           git push origin master
 
-          cd ${buildDir}
+          cd ${githubRepoDir}
 
           git add .
           git commit -m "Update cava to v${latest}"

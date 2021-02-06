@@ -39,10 +39,19 @@ jobs:
         env:
           GIT_SSH_COMMAND: "ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
         run: |
-          buildDir="${PWD}"
+          aurRepoDir="~/cava"
+          githubRepoDir="${PWD}"
+          buildDir="/tmp/build"
+
           aurCommitMessage="$(git log -1 --pretty=format:%B)"
 
-          git clone ssh://aur@aur.archlinux.org/cava.git ~/cava
+          git config --global user.name ${{ secrets.MY_GIT_NAME }}
+          git config --global user.email ${{ secrets.MY_GIT_EMAIL }}
+          git clone ssh://aur@aur.archlinux.org/cava.git ${aurRepoDir}
+
+          rsync --progress --delete -r --exclude={'*.gz','*.xz','.github','pkg','src','.git'} ${githubRepoDir} ${buildDir}
+
+          cd ${buildDir}
 
           useradd makepkg
           chown makepkg:root . -R
@@ -50,18 +59,16 @@ jobs:
           su makepkg -c "updpkgsums"
           su makepkg -c "makepkg --printsrcinfo" > .SRCINFO
 
-          git config --global user.name ${{ secrets.MY_GIT_NAME }}
-          git config --global user.email ${{ secrets.MY_GIT_EMAIL }}
+          rsync --progress --delete -r --exclude={'*.gz','*.xz','.github','pkg','src','.git'} ${buildDir} ${githubRepoDir}
+          rsync --progress --delete -r --exclude={'*.gz','*.xz','.github','pkg','src','.git'} ${buildDir} ${aurRepoDir}
 
-          find . -maxdepth 1 -type f -exec cp -v {} ~/cava \;
-
-          cd ~/cava
+          cd ${aurRepoDir}
 
           git add .
           git diff --quiet --exit-code --cached || git commit -m "${aurCommitMessage}"
           git push origin master
 
-          cd ${buildDir}
+          cd ${githubRepoDir}
 
           git add .
           git diff --quiet --exit-code --cached || git commit -m "Update .SRCINFO"
