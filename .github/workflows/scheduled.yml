@@ -1,0 +1,77 @@
+name: Scheduled AUR package update Workflow
+on:
+  schedule:
+    - cron: "45 12 15 * *"
+
+jobs:
+  update:
+    name: "Update repository"
+    runs-on: ubuntu-latest
+    container:
+      image: archlinux
+
+    steps:
+      - name: Store the SSH key
+        run: |
+          echo "${{ secrets.MY_SSH_KEY }}" | install -Dm600 /dev/stdin /root/.ssh/id_rsa
+
+      - name: Get time for cache
+        id: cache_time
+        run: echo "::set-output name=time::$(date +%F-%T)"
+
+      - name: Set up cache
+        uses: actions/cache@master
+        with:
+          path: /var/cache/pacman/pkg
+          key: pacman-cache-x86_64-${{ steps.cache_time.outputs.time }}
+          restore-keys: pacman-cache-x86_64-
+
+      - name: Install dependencies
+        run: |
+          pacman -Syu --noconfirm
+          pacman -S --needed --noconfirm git binutils pacman-contrib openssh
+
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: Update if necessary
+        env:
+          GIT_SSH_COMMAND: "ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
+        run: |
+          current=$(grep -P "^pkgver" PKGBUILD | cut -d= -f2)
+          buildDir="${PWD}"
+
+          git clone ssh://aur@aur.archlinux.org/cava.git ~/cava
+
+          latest=$(curl --silent "https://api.github.com/repos/karlstav/cava/releases/latest" | jq -r .tag_name)
+
+          echo "Previous version: ${current}"
+          echo "New version: ${latest}"
+
+          [[ "${current}" == "${latest}" ]] && exit 0
+
+          useradd makepkg
+          chown makepkg:root . -R
+
+          sed "/^pkgver=/s/.*/pkgver=${latest}/" -i PKGBUILD
+          sed "/^pkgrel=/s/.*/pkgrel=1/" -i PKGBUILD
+
+          su makepkg -c "updpkgsums"
+          su makepkg -c "makepkg --printsrcinfo" > .SRCINFO
+
+          git config --global user.name ${{ secrets.MY_GIT_NAME }}
+          git config --global user.email ${{ secrets.MY_GIT_EMAIL }}
+
+          find . -maxdepth 1 -type f -exec cp -v {} ~/cava \;
+
+          cd ~/cava
+
+          git add .
+          git commit -m "Update cava to v${latest}"
+          git push origin master
+
+          cd ${buildDir}
+
+          git add .
+          git commit -m "Update cava to v${latest}"
+          git push origin master

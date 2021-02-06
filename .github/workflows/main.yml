@@ -1,0 +1,68 @@
+name: AUR package update Workflow
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  update:
+    name: "Update repository"
+    runs-on: ubuntu-latest
+    container:
+      image: archlinux
+
+    steps:
+      - name: Store the SSH key
+        run: |
+          echo "${{ secrets.MY_SSH_KEY }}" | install -Dm600 /dev/stdin /root/.ssh/id_rsa
+
+      - name: Get time for cache
+        id: cache_time
+        run: echo "::set-output name=time::$(date +%F-%T)"
+
+      - name: Set up cache
+        uses: actions/cache@master
+        with:
+          path: /var/cache/pacman/pkg
+          key: pacman-cache-x86_64-${{ steps.cache_time.outputs.time }}
+          restore-keys: pacman-cache-x86_64-
+
+      - name: Install dependencies
+        run: |
+          pacman -Syu --noconfirm
+          pacman -S --needed --noconfirm git binutils pacman-contrib openssh
+
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: Update if necessary
+        env:
+          GIT_SSH_COMMAND: "ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
+        run: |
+          buildDir="${PWD}"
+          aurCommitMessage="$(git log -1 --pretty=format:%B)"
+
+          git clone ssh://aur@aur.archlinux.org/cava.git ~/cava
+
+          useradd makepkg
+          chown makepkg:root . -R
+
+          su makepkg -c "updpkgsums"
+          su makepkg -c "makepkg --printsrcinfo" > .SRCINFO
+
+          git config --global user.name ${{ secrets.MY_GIT_NAME }}
+          git config --global user.email ${{ secrets.MY_GIT_EMAIL }}
+
+          find . -maxdepth 1 -type f -exec cp -v {} ~/cava \;
+
+          cd ~/cava
+
+          git add .
+          git diff --quiet --exit-code --cached || git commit -m "${aurCommitMessage}"
+          git push origin master
+
+          cd ${buildDir}
+
+          git add .
+          git diff --quiet --exit-code --cached || git commit -m "Update .SRCINFO"
+          git push origin master
