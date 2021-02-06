@@ -39,7 +39,7 @@ jobs:
         env:
           GIT_SSH_COMMAND: "ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
         run: |
-          aurRepoDir="~/cava"
+          aurRepoDir=/tmp/cava
           githubRepoDir="${PWD}"
           buildDir="/tmp/build"
 

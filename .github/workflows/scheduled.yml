@@ -41,7 +41,7 @@ jobs:
           current=$(grep -P "^pkgver" PKGBUILD | cut -d= -f2)
           latest=$(curl --silent "https://api.github.com/repos/karlstav/cava/releases/latest" | jq -r .tag_name)
 
-          aurRepoDir="~/cava"
+          aurRepoDir=/tmp/cava
           githubRepoDir="${PWD}"
           buildDir="/tmp/build"
 
