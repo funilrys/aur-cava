@@ -30,7 +30,7 @@ jobs:
       - name: Install dependencies
         run: |
           pacman -Syu --noconfirm
-          pacman -S --needed --noconfirm git binutils pacman-contrib openssh
+          pacman -S --needed --noconfirm git binutils pacman-contrib openssh rsync
 
       - name: Checkout Repository
         uses: actions/checkout@v2
