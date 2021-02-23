@@ -8,7 +8,7 @@ jobs:
     name: "Update repository"
     runs-on: ubuntu-latest
     container:
-      image: archlinux
+      image: archlinux/archlinux
 
     steps:
       - name: Store the SSH key
