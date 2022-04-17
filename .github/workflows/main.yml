@@ -43,14 +43,13 @@ jobs:
           githubRepoDir="${PWD}"
           buildDir="/tmp/build"
 
-          aurCommitMessage="$(git log -1 --pretty=format:%B)"
-
-          git config --global --add safe.directory /__w/aur-cava/aur-cava
           git config --global --add safe.directory ${GITHUB_WORKSPACE}
           git config --global --add safe.directory ${aurRepoDir}
           git config --global --add safe.directory ${githubRepoDir}
           git config --global user.name ${{ secrets.MY_GIT_NAME }}
           git config --global user.email ${{ secrets.MY_GIT_EMAIL }}
+          
+          aurCommitMessage="$(git log -1 --pretty=format:%B)"
           git clone ssh://aur@aur.archlinux.org/cava.git ${aurRepoDir}
 
           rsync --progress --delete -r --exclude={'*.gz','*.xz','.github','pkg','src','.git'} ${githubRepoDir}/ ${buildDir}/
