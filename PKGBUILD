@@ -2,7 +2,7 @@
 # Ex-Maintainer: Celestial Walrus <aur@celestial.cf>
 
 pkgname=cava
-pkgver=0.8.3
+pkgver=0.9.0
 pkgrel=1
 pkgdesc='Console-based Audio Visualizer for Alsa'
 arch=('any')
