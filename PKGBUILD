@@ -10,7 +10,7 @@ url='https://github.com/karlstav/cava'
 license=('MIT')
 depends=('fftw' 'alsa-lib' 'ncurses' 'iniparser' 'sndio' 'portaudio')
 optdepends=('pulseaudio')
-makedepends=('sndio' 'portaudio' 'libpulse')
+makedepends=('sndio' 'portaudio' 'libpulse' 'm4' 'automake' 'autoconf')
 source=("$pkgname-$pkgver.tar.gz::https://github.com/karlstav/cava/archive/${pkgver}.tar.gz")
 sha512sums=('ed5cd222565324553b598c01740c1178dcaf41f8fe715e301906f122e605e55ec080e3254e23459cab01d03ce5204bee1cc8821c871a5cb95181704522cec76d')
 
