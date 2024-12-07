@@ -46,6 +46,13 @@ jobs:
           githubRepoDir="${PWD}"
           buildDir="/tmp/build"
 
+          git config --global --add safe.directory /__w/aur-cava/aur-cava
+          git config --global --add safe.directory ${GITHUB_WORKSPACE}
+          git config --global --add safe.directory ${aurRepoDir}
+          git config --global --add safe.directory ${githubRepoDir}
+          git config --global user.name ${{ secrets.MY_GIT_NAME }}
+          git config --global user.email ${{ secrets.MY_GIT_EMAIL }}
+
           date +"%Y-%m-%dT%H:%M:%S%:z" > "${githubRepoDir}/.github/.keepalive"
 
           echo "Previous version: ${current}"
@@ -53,12 +60,6 @@ jobs:
 
           [[ "${current}" == "${latest}" ]] && git add . && git commit -m "keep-alive" && git push origin master && exit 0
 
-          git config --global --add safe.directory /__w/aur-cava/aur-cava
-          git config --global --add safe.directory ${GITHUB_WORKSPACE}
-          git config --global --add safe.directory ${aurRepoDir}
-          git config --global --add safe.directory ${githubRepoDir}
-          git config --global user.name ${{ secrets.MY_GIT_NAME }}
-          git config --global user.email ${{ secrets.MY_GIT_EMAIL }}
           git clone ssh://aur@aur.archlinux.org/cava.git ${aurRepoDir}
 
           rsync --progress --delete -r --exclude={'*.gz','*.xz','.github','pkg','src','.git'} ${githubRepoDir}/ ${buildDir}/
