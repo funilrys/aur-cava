@@ -46,10 +46,12 @@ jobs:
           githubRepoDir="${PWD}"
           buildDir="/tmp/build"
 
+          date +"%Y-%m-%dT%H:%M:%S%:z" > "${githubRepoDir}/.github/.keepalive"
+
           echo "Previous version: ${current}"
           echo "New version: ${latest}"
 
-          [[ "${current}" == "${latest}" ]] && exit 0
+          [[ "${current}" == "${latest}" ]] && git add . && git commit -m "keep-alive" && git push origin master && exit 0
 
           git config --global --add safe.directory /__w/aur-cava/aur-cava
           git config --global --add safe.directory ${GITHUB_WORKSPACE}
