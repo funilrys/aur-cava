@@ -2,7 +2,7 @@ name: Scheduled AUR package update Workflow
 on:
   workflow_dispatch: {}
   schedule:
-    - cron: "45 12 15 * *"
+    - cron: "45 12 * * *"
 
 jobs:
   update:
